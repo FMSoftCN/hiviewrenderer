@@ -1,3 +1,5 @@
+*.o
+*.so
 *.mode*
 *.pbxuser
 *.perspective*
