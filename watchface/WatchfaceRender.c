@@ -27,6 +27,8 @@
 #define M_PI           3.14159265358979323846
 
 int g_watchface_mode = ACTIVE_MODE;
+HVIEW g_watchface_view = INVALID_HANDLE;
+HCONTEXT g_watchface_context = INVALID_HANDLE; 
 
 void initialize()
 {
@@ -37,6 +39,8 @@ int create(HVIEW view, HCONTEXT context, int* activeModeIntervalMs)
 {
     printf("%s:%d:%s\n", __FILE__, __LINE__, __func__);
     *activeModeIntervalMs = 10;
+    g_watchface_view = view;
+    g_watchface_context = context;
     return g_watchface_mode;
 }
 
@@ -137,8 +141,16 @@ void paintSecondHand(HCONTEXT c, float cx, float cy, float r, float angleInRadia
     hiview_canvas_restore(c);
 }
 
+void pre_paint(HVIEW view, HCONTEXT context)
+{
+    printf("............................................watchface pre_paint\n");
+}
+
 void render(HCONTEXT c, float x, float y, float width, float height)
 {
+    printf("######################################### do render\n");
+    const char* aa = hiview_get_css_property(g_watchface_view, "-hi-max");
+
     double ct = hview_canvas_get_local_time_ms(c);
 
     float minL = fmin(width, height);
@@ -173,4 +185,11 @@ void render(HCONTEXT c, float x, float y, float width, float height)
     paintHourHand(c, cx, cy, cr * 0.7f, M_PI * 2 * (h / 12 + (m / 60) * (1.0f / 12)));
     paintSecondHand(c, cx, cy, cr * 0.7f, M_PI * 2 * (s / 60 + (ms / 1000) * (1.0f / 60)));
 }
+
+void post_paint(HVIEW view, HCONTEXT context)
+{
+//    hiview_canvas_send_hands_moved_event(view, "hour,minute,second");
+    printf("............................................watchface post_render\n\n");
+}
+
 

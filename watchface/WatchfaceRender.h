@@ -39,7 +39,9 @@ extern "C" {
 
 void initialize();
 int create(HVIEW view, HCONTEXT context, int* activeModeIntervalMs);
+void pre_paint(HVIEW view, HCONTEXT context);
 void render(HCONTEXT context, float x, float y, float width, float height);
+void post_paint(HVIEW view, HCONTEXT context);
 void destroy();
 void terminate();
 
