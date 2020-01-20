@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <strings.h>
 #include <math.h>
 #include "HiViewCanvas.h"
@@ -66,9 +67,27 @@ int get_data_move_attribute(HVIEW v)
     }
 }
 
+void init_time_by_data_time_attribute(HVIEW v)
+{
+    const char* data_time = hiview_get_attribute(v, "data-time");
+    if (!data_time)
+        return;
+    int h = 0;
+    int m = 0;
+    int s = 0;
+    int ret = sscanf(data_time, "%d:%d:%d", &h, &m, &s);
+    if (ret != EOF)
+    {
+        g_time_h = h;
+        g_time_m = m;
+        g_time_s = s;
+    }
+}
+
 void initialize(HVIEW v, HCONTEXT c)
 {
     printf("%s:%d:%s\n", __FILE__, __LINE__, __func__);
+    init_time_by_data_time_attribute(v);
 }
 
 int create(HVIEW view, HCONTEXT context, int* activeModeIntervalMs)
@@ -183,6 +202,9 @@ int pre_render(HVIEW v, HCONTEXT c)
     printf("\n............................................watchface pre_render counter=%d\n", counter);
 
     int need_re_render = 0;
+    fire_hour_event = 0;
+    fire_minute_event = 0;
+    fire_second_event = 0;
     g_auto_watch = get_data_move_attribute(v);
     if (g_auto_watch)
     {
@@ -236,13 +258,11 @@ int pre_render(HVIEW v, HCONTEXT c)
         }
     }
 
-    //hiview_canvas_send_hands_moved_event(view, "hour,minute,second");
     return need_re_render || g_need_re_render;
 }
 
 void render(HCONTEXT c, float x, float y, float width, float height)
 {
-    printf("######################################### do render counter=%d\n", counter);
     g_need_re_render = 0;
     const char* aa = hiview_get_css_property(g_watchface_view, "-hi-max");
     float minL = fmin(width, height);
@@ -263,17 +283,54 @@ void render(HCONTEXT c, float x, float y, float width, float height)
 
 void post_render(HVIEW view, HCONTEXT context)
 {
-    printf("............................................watchface post_render g_auto_watch=%d\n", g_auto_watch);
+    char buf[20] = {0};
+    if (fire_hour_event)
+    {
+        hiview_canvas_send_event(view, "hourmoved", 0, 0);
+        strcpy(buf, "hour");
+    }
+
+    if (fire_minute_event)
+    {
+        hiview_canvas_send_event(view, "minutemoved", 0, 0);
+        if (strlen(buf))
+        {
+            strcat(buf, ",");
+            strcat(buf, "minute");
+        }
+        else
+        {
+            strcpy(buf, "minute");
+        }
+    }
+
+    if (fire_second_event)
+    {
+        hiview_canvas_send_event(view, "secondmoved", 0, 0);
+        if (strlen(buf))
+        {
+            strcat(buf, ",");
+            strcat(buf, "second");
+        }
+        else
+        {
+            strcpy(buf, "second");
+        }
+    }
+
+    if (strlen(buf))
+        hiview_canvas_send_hands_moved_event(view, buf);
+
+    sprintf(buf, "%02d:%02d:%02d", g_time_h, g_time_m, g_time_s);
+    hiview_set_attribute(view, "data-time", buf);
 }
 
 void pre_paint(HVIEW view, HCONTEXT context)
 {
-    printf("............................................watchface pre_paint counter=%d\n", counter);
 }
 
 void post_paint(HVIEW view, HCONTEXT context)
 {
-    printf("............................................watchface post_paint counter=%d\n\n", counter);
 }
 
 
