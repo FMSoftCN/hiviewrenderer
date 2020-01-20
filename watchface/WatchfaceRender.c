@@ -45,6 +45,8 @@ int fire_minute_event = 0;
 int fire_second_event = 0;
 int fire_hands_moved_event = 0;
 
+int g_need_re_render = 1;
+
 
 int get_data_move_attribute(HVIEW v)
 {
@@ -175,11 +177,12 @@ void paintSecondHand(HCONTEXT c, float cx, float cy, float r, float angleInRadia
     hiview_canvas_restore(c);
 }
 
-void pre_render(HVIEW v, HCONTEXT c)
+int pre_render(HVIEW v, HCONTEXT c)
 {
     counter++;
     printf("\n............................................watchface pre_render counter=%d\n", counter);
 
+    int need_re_render = 0;
     g_auto_watch = get_data_move_attribute(v);
     if (g_auto_watch)
     {
@@ -203,34 +206,44 @@ void pre_render(HVIEW v, HCONTEXT c)
             second += 60;
         }
 
-        g_time_ms = fmod(ct, 1000);
+        int ms = fmod(ct, 1000);
 
         if (hour != g_time_h)
         {
             g_time_h = hour;
             fire_hour_event = 1;
+            need_re_render = 1;
         }
 
         if (minute != g_time_m)
         {
             g_time_m = minute;
             fire_minute_event = 1;
+            need_re_render = 1;
         }
 
         if (second != g_time_s)
         {
             g_time_s = second;
             fire_second_event = 1;
+            need_re_render = 1;
         }
 
+        if (ms != g_time_ms)
+        {
+            g_time_ms = ms;
+            need_re_render = 1;
+        }
     }
 
     //hiview_canvas_send_hands_moved_event(view, "hour,minute,second");
+    return need_re_render || g_need_re_render;
 }
 
 void render(HCONTEXT c, float x, float y, float width, float height)
 {
     printf("######################################### do render counter=%d\n", counter);
+    g_need_re_render = 0;
     const char* aa = hiview_get_css_property(g_watchface_view, "-hi-max");
     float minL = fmin(width, height);
     float cx = minL / 2; 
