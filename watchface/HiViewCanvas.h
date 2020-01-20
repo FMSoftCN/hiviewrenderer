@@ -196,6 +196,9 @@ const char* hiview_get_css_property(HVIEW v, const char* name);
 void hiview_canvas_send_event(HVIEW v, const char* event, int isCanBubble, int isCancelable);
 void hiview_canvas_send_hands_moved_event(HVIEW v, const char* info);
 
+/* Memory for the new string is obtained with malloc, and can be freed with free */
+char* hiview_get_param(HVIEW v, const char* name);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

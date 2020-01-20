@@ -18,9 +18,11 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <math.h>
+#include <ctype.h>
 #include "HiViewCanvas.h"
 #include "WatchfaceRender.h"
 
@@ -46,6 +48,43 @@ int fire_hands_moved_event = 0;
 
 int g_need_re_render = 1;
 
+int g_has_hand_h = 1;
+int g_has_hand_m = 1;
+int g_has_hand_s = 1;
+
+char * strtrimall( char *src)
+{
+    int  nIndex1;
+    int  nLen;
+
+    if (src == NULL)
+        return NULL;
+
+    if (src [0] == '\0')
+        return src;
+
+    nLen = strlen (src);
+
+    nIndex1 = 0;
+    while (isspace ((int)src[nIndex1]))
+        nIndex1 ++;
+
+    if (nIndex1 == nLen) {
+        *src = '\0';
+        return src;
+    }
+
+    strcpy (src, src + nIndex1);
+
+    nLen = strlen (src);
+    nIndex1 = nLen - 1;
+    while (isspace ((int)src[nIndex1]))
+        nIndex1 --;
+
+    src [nIndex1 + 1] = '\0';
+
+    return src;
+}
 
 int get_data_move_attribute(HVIEW v)
 {
@@ -82,9 +121,42 @@ void init_time_by_data_time_attribute(HVIEW v)
     }
 }
 
+void update_hands_info_by_param(HVIEW v)
+{
+    char* param_hands = hiview_get_param(v, "hands");
+    if (!param_hands)
+        return;
+
+    g_has_hand_h = 0;
+    g_has_hand_m = 0;
+    g_has_hand_s = 0;
+
+    char* token = strtok(param_hands, ",");
+    while( token != NULL )
+    {
+        if (strcasecmp(strtrimall(token), "hour") == 0)
+        {
+            g_has_hand_h = 1;
+        }
+        else if (strcasecmp(strtrimall(token), "minute") == 0)
+        {
+            g_has_hand_m = 1;
+        }
+        else if (strcasecmp(strtrimall(token), "second") == 0)
+        {
+            g_has_hand_s = 1;
+        }
+
+        token = strtok(NULL, ",");
+    }
+    free(param_hands);
+}
+
+
 void initialize(HVIEW v, HCONTEXT c)
 {
     init_time_by_data_time_attribute(v);
+    update_hands_info_by_param(v);
 }
 
 int create(HVIEW view, HCONTEXT context, int* activeModeIntervalMs)
@@ -267,9 +339,14 @@ void render(HCONTEXT c, float x, float y, float width, float height)
     float s = g_time_s;
     float ms = g_time_ms;
 
-    paintMinuteHand(c, cx, cy, cr * 0.7f, M_PI * 2 * (m / 60 + (s / 60) * (1.0f / 60)));
-    paintHourHand(c, cx, cy, cr * 0.7f, M_PI * 2 * (h / 12 + (m / 60) * (1.0f / 12)));
-    paintSecondHand(c, cx, cy, cr * 0.7f, M_PI * 2 * (s / 60 + (ms / 1000) * (1.0f / 60)));
+    if (g_has_hand_m)
+        paintMinuteHand(c, cx, cy, cr * 0.7f, M_PI * 2 * (m / 60 + (s / 60) * (1.0f / 60)));
+
+    if (g_has_hand_h)
+        paintHourHand(c, cx, cy, cr * 0.7f, M_PI * 2 * (h / 12 + (m / 60) * (1.0f / 12)));
+
+    if (g_has_hand_s)
+        paintSecondHand(c, cx, cy, cr * 0.7f, M_PI * 2 * (s / 60 + (ms / 1000) * (1.0f / 60)));
 }
 
 void post_render(HVIEW view, HCONTEXT context)
