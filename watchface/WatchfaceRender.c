@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <strings.h>
 #include <math.h>
 #include "HiViewCanvas.h"
 #include "WatchfaceRender.h"
@@ -30,7 +31,40 @@ int g_watchface_mode = ACTIVE_MODE;
 HVIEW g_watchface_view = INVALID_HANDLE;
 HCONTEXT g_watchface_context = INVALID_HANDLE; 
 
-void initialize()
+int counter = 0;
+
+int g_auto_watch = 1;
+
+int g_time_h = 0;
+int g_time_m = 0;
+int g_time_s = 0;
+int g_time_ms = 0;
+
+int fire_hour_event = 0;
+int fire_minute_event = 0;
+int fire_second_event = 0;
+int fire_hands_moved_event = 0;
+
+
+int get_data_move_attribute(HVIEW v)
+{
+    const char* move = hiview_get_attribute(v, "data-move");
+    if (!move)
+    {
+        return 1;
+    }
+
+    if (strcasecmp(move, "static") == 0)
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
+void initialize(HVIEW v, HCONTEXT c)
 {
     printf("%s:%d:%s\n", __FILE__, __LINE__, __func__);
 }
@@ -141,55 +175,92 @@ void paintSecondHand(HCONTEXT c, float cx, float cy, float r, float angleInRadia
     hiview_canvas_restore(c);
 }
 
-void pre_paint(HVIEW view, HCONTEXT context)
+void pre_render(HVIEW v, HCONTEXT c)
 {
-    printf("............................................watchface pre_paint\n");
+    counter++;
+    printf("\n............................................watchface pre_render counter=%d\n", counter);
+
+    g_auto_watch = get_data_move_attribute(v);
+    if (g_auto_watch)
+    {
+        double ct = hview_canvas_get_local_time_ms(c);
+
+        int hour = fmod(floor(ct/ 3600000),24);
+        if(hour < 0)
+        {
+            hour  += 24;
+        }
+
+        int minute = fmod(floor(ct / 60000), 60);
+        if(minute < 0)
+        {
+            minute  += 60;
+        }
+
+        int second = fmod(floor(ct / 1000 ), 60);
+        if(second < 0)
+        {
+            second += 60;
+        }
+
+        g_time_ms = fmod(ct, 1000);
+
+        if (hour != g_time_h)
+        {
+            g_time_h = hour;
+            fire_hour_event = 1;
+        }
+
+        if (minute != g_time_m)
+        {
+            g_time_m = minute;
+            fire_minute_event = 1;
+        }
+
+        if (second != g_time_s)
+        {
+            g_time_s = second;
+            fire_second_event = 1;
+        }
+
+    }
+
+    //hiview_canvas_send_hands_moved_event(view, "hour,minute,second");
 }
 
 void render(HCONTEXT c, float x, float y, float width, float height)
 {
-    printf("######################################### do render\n");
+    printf("######################################### do render counter=%d\n", counter);
     const char* aa = hiview_get_css_property(g_watchface_view, "-hi-max");
-
-    double ct = hview_canvas_get_local_time_ms(c);
-
     float minL = fmin(width, height);
     float cx = minL / 2; 
     float cy = minL / 2;
     float cr = minL / 2;
 
-    int hour = fmod(floor(ct/ 3600000),24);
-    if(hour < 0)
-    {
-        hour  += 24;
-    }
 
-    int minute = fmod(floor(ct / 60000), 60);
-    if(minute < 0)
-    {
-        minute  += 60;
-    }
-
-    int second = fmod(floor(ct / 1000 ), 60);
-    if(second < 0)
-    {
-        second += 60;
-    }
-
-    float h = hour;
-    float m = minute;
-    float s = second;
-    float ms = fmod(ct, 1000);
+    float h = g_time_h;
+    float m = g_time_m;
+    float s = g_time_s;
+    float ms = g_time_ms;
 
     paintMinuteHand(c, cx, cy, cr * 0.7f, M_PI * 2 * (m / 60 + (s / 60) * (1.0f / 60)));
     paintHourHand(c, cx, cy, cr * 0.7f, M_PI * 2 * (h / 12 + (m / 60) * (1.0f / 12)));
     paintSecondHand(c, cx, cy, cr * 0.7f, M_PI * 2 * (s / 60 + (ms / 1000) * (1.0f / 60)));
 }
 
+void post_render(HVIEW view, HCONTEXT context)
+{
+    printf("............................................watchface post_render g_auto_watch=%d\n", g_auto_watch);
+}
+
+void pre_paint(HVIEW view, HCONTEXT context)
+{
+    printf("............................................watchface pre_paint counter=%d\n", counter);
+}
+
 void post_paint(HVIEW view, HCONTEXT context)
 {
-//    hiview_canvas_send_hands_moved_event(view, "hour,minute,second");
-    printf("............................................watchface post_render\n\n");
+    printf("............................................watchface post_paint counter=%d\n\n", counter);
 }
 
 
