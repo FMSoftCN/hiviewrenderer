@@ -316,12 +316,4 @@ void post_render(HVIEW view, HCONTEXT context)
     hiview_set_attribute(view, "data-time", buf);
 }
 
-void pre_paint(HVIEW view, HCONTEXT context)
-{
-}
-
-void post_paint(HVIEW view, HCONTEXT context)
-{
-}
-
 

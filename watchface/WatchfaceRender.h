@@ -42,8 +42,6 @@ int create(HVIEW view, HCONTEXT context, int* activeModeIntervalMs);
 int pre_render(HVIEW view, HCONTEXT context);
 void render(HCONTEXT context, float x, float y, float width, float height);
 void post_render(HVIEW view, HCONTEXT context);
-void pre_paint(HVIEW view, HCONTEXT context);
-void post_paint(HVIEW view, HCONTEXT context);
 void destroy();
 void terminate();
 
