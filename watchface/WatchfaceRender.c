@@ -32,8 +32,6 @@ int g_watchface_mode = ACTIVE_MODE;
 HVIEW g_watchface_view = INVALID_HANDLE;
 HCONTEXT g_watchface_context = INVALID_HANDLE; 
 
-int counter = 0;
-
 int g_auto_watch = 1;
 
 int g_time_h = 0;
@@ -86,13 +84,11 @@ void init_time_by_data_time_attribute(HVIEW v)
 
 void initialize(HVIEW v, HCONTEXT c)
 {
-    printf("%s:%d:%s\n", __FILE__, __LINE__, __func__);
     init_time_by_data_time_attribute(v);
 }
 
 int create(HVIEW view, HCONTEXT context, int* activeModeIntervalMs)
 {
-    printf("%s:%d:%s\n", __FILE__, __LINE__, __func__);
     *activeModeIntervalMs = 10;
     g_watchface_view = view;
     g_watchface_context = context;
@@ -101,12 +97,10 @@ int create(HVIEW view, HCONTEXT context, int* activeModeIntervalMs)
 
 void destroy()
 {
-    printf("%s:%d:%s\n", __FILE__, __LINE__, __func__);
 }
 
 void terminate()
 {
-    printf("%s:%d:%s\n", __FILE__, __LINE__, __func__);
 }
 
 void paintHourHand(HCONTEXT c, float cx, float cy, float r, float angleInRadians)
@@ -198,9 +192,6 @@ void paintSecondHand(HCONTEXT c, float cx, float cy, float r, float angleInRadia
 
 int pre_render(HVIEW v, HCONTEXT c)
 {
-    counter++;
-    printf("\n............................................watchface pre_render counter=%d\n", counter);
-
     int need_re_render = 0;
     fire_hour_event = 0;
     fire_minute_event = 0;
