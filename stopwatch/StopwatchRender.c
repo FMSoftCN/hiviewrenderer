@@ -34,6 +34,8 @@ typedef struct watchface_data
 {
     int watchface_mode;
 
+    double time_start;
+
     int time_h;
     int time_m;
     int time_s;
@@ -85,11 +87,13 @@ char * strtrimall( char *src)
 }
 
 
-Watchface* init_watchface(HVIEW v)
+Watchface* init_watchface(HVIEW v, HCONTEXT c)
 {
     Watchface* wf = (Watchface*)malloc(sizeof(Watchface));
 
     wf->watchface_mode = ACTIVE_MODE;
+
+    wf->time_start = hview_canvas_get_local_time_ms(c);
     wf->time_h = 0;
     wf->time_m = 0;
     wf->time_s = 0;
@@ -156,7 +160,7 @@ void update_hands_info_by_param(HVIEW v)
 
 void initialize(HVIEW v, HCONTEXT c)
 {
-    init_watchface(v);
+    init_watchface(v, c);
     init_time_by_data_time_attribute(v);
     update_hands_info_by_param(v);
 }
@@ -231,7 +235,21 @@ void paintStopWatchHand(HCONTEXT c, float cx, float cy, float length, float widt
 
 int pre_render(HVIEW v, HCONTEXT c)
 {
-    return 1;
+    int need_re_render = 1;
+    Watchface* wf = get_watchface(v);
+
+    double ct = hview_canvas_get_local_time_ms(c);
+    double diff = ct - wf->time_start;
+
+    if (diff <= 0)
+        return 0;
+
+    wf->time_h = floor(diff/ 3600000);
+    wf->time_m = fmod(floor(diff / 60000), 60);
+    wf->time_s = fmod(floor(diff / 1000 ), 60);
+    wf->time_ms = fmod(diff, 1000);
+
+    return need_re_render | wf->need_re_render;
 }
 
 void render(HVIEW v, HCONTEXT c, float x, float y, float width, float height)
