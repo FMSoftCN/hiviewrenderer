@@ -33,8 +33,6 @@
 typedef struct watchface_data
 {
     int g_watchface_mode;
-    HVIEW g_watchface_view;
-    HCONTEXT g_watchface_context; 
 
     int g_auto_watch;
 
@@ -95,8 +93,6 @@ Watchface* init_watchface(HVIEW v)
     Watchface* wf = (Watchface*)malloc(sizeof(Watchface));
 
     wf->g_watchface_mode = ACTIVE_MODE;
-    wf->g_watchface_view = INVALID_HANDLE;
-    wf->g_watchface_context = INVALID_HANDLE; 
     wf->g_auto_watch = 1;
     wf->g_time_h = 0;
     wf->g_time_m = 0;
@@ -201,8 +197,6 @@ int create(HVIEW view, HCONTEXT context, int* activeModeIntervalMs)
     *activeModeIntervalMs = 10;
 
     Watchface* wf = get_watchface(view);
-    wf->g_watchface_view = view;
-    wf->g_watchface_context = context;
     return wf->g_watchface_mode;
 }
 
