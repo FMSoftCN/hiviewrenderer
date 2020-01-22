@@ -32,25 +32,25 @@
 
 typedef struct watchface_data
 {
-    int g_watchface_mode;
+    int watchface_mode;
 
-    int g_auto_watch;
+    int auto_watch;
 
-    int g_time_h;
-    int g_time_m;
-    int g_time_s;
-    int g_time_ms;
+    int time_h;
+    int time_m;
+    int time_s;
+    int time_ms;
 
     int fire_hour_event;
     int fire_minute_event;
     int fire_second_event;
     int fire_hands_moved_event;
 
-    int g_need_re_render;
+    int need_re_render;
 
-    int g_has_hand_h;
-    int g_has_hand_m;
-    int g_has_hand_s;
+    int has_hand_h;
+    int has_hand_m;
+    int has_hand_s;
 } Watchface;
 
 char * strtrimall( char *src)
@@ -92,20 +92,20 @@ Watchface* init_watchface(HVIEW v)
 {
     Watchface* wf = (Watchface*)malloc(sizeof(Watchface));
 
-    wf->g_watchface_mode = ACTIVE_MODE;
-    wf->g_auto_watch = 1;
-    wf->g_time_h = 0;
-    wf->g_time_m = 0;
-    wf->g_time_s = 0;
-    wf->g_time_ms = 0;
+    wf->watchface_mode = ACTIVE_MODE;
+    wf->auto_watch = 1;
+    wf->time_h = 0;
+    wf->time_m = 0;
+    wf->time_s = 0;
+    wf->time_ms = 0;
     wf->fire_hour_event = 0;
     wf->fire_minute_event = 0;
     wf->fire_second_event = 0;
     wf->fire_hands_moved_event = 0;
-    wf->g_need_re_render = 1;
-    wf->g_has_hand_h = 1;
-    wf->g_has_hand_m = 1;
-    wf->g_has_hand_s = 1;
+    wf->need_re_render = 1;
+    wf->has_hand_h = 1;
+    wf->has_hand_m = 1;
+    wf->has_hand_s = 1;
 
     hview_set_extra(v, wf);
     return wf;
@@ -146,9 +146,9 @@ void init_time_by_data_time_attribute(HVIEW v)
     if (ret != EOF)
     {
         Watchface* wf = get_watchface(v);
-        wf->g_time_h = h;
-        wf->g_time_m = m;
-        wf->g_time_s = s;
+        wf->time_h = h;
+        wf->time_m = m;
+        wf->time_s = s;
     }
 }
 
@@ -159,24 +159,24 @@ void update_hands_info_by_param(HVIEW v)
         return;
 
     Watchface* wf = get_watchface(v);
-    wf->g_has_hand_h = 0;
-    wf->g_has_hand_m = 0;
-    wf->g_has_hand_s = 0;
+    wf->has_hand_h = 0;
+    wf->has_hand_m = 0;
+    wf->has_hand_s = 0;
 
     char* token = strtok(param_hands, ",");
     while( token != NULL )
     {
         if (strcasecmp(strtrimall(token), "hour") == 0)
         {
-            wf->g_has_hand_h = 1;
+            wf->has_hand_h = 1;
         }
         else if (strcasecmp(strtrimall(token), "minute") == 0)
         {
-            wf->g_has_hand_m = 1;
+            wf->has_hand_m = 1;
         }
         else if (strcasecmp(strtrimall(token), "second") == 0)
         {
-            wf->g_has_hand_s = 1;
+            wf->has_hand_s = 1;
         }
 
         token = strtok(NULL, ",");
@@ -197,7 +197,7 @@ int create(HVIEW view, HCONTEXT context, int* activeModeIntervalMs)
     *activeModeIntervalMs = 10;
 
     Watchface* wf = get_watchface(view);
-    return wf->g_watchface_mode;
+    return wf->watchface_mode;
 }
 
 void destroy(HVIEW view, HCONTEXT context)
@@ -305,8 +305,8 @@ int pre_render(HVIEW v, HCONTEXT c)
     wf->fire_minute_event = 0;
     wf->fire_second_event = 0;
 
-    wf->g_auto_watch = get_data_move_attribute(v);
-    if (wf->g_auto_watch)
+    wf->auto_watch = get_data_move_attribute(v);
+    if (wf->auto_watch)
     {
         double ct = hview_canvas_get_local_time_ms(c);
 
@@ -330,41 +330,41 @@ int pre_render(HVIEW v, HCONTEXT c)
 
         int ms = fmod(ct, 1000);
 
-        if (hour != wf->g_time_h)
+        if (hour != wf->time_h)
         {
-            wf->g_time_h = hour;
+            wf->time_h = hour;
             wf->fire_hour_event = 1;
             need_re_render = 1;
         }
 
-        if (minute != wf->g_time_m)
+        if (minute != wf->time_m)
         {
-            wf->g_time_m = minute;
+            wf->time_m = minute;
             wf->fire_minute_event = 1;
             need_re_render = 1;
         }
 
-        if (second != wf->g_time_s)
+        if (second != wf->time_s)
         {
-            wf->g_time_s = second;
+            wf->time_s = second;
             wf->fire_second_event = 1;
             need_re_render = 1;
         }
 
-        if (ms != wf->g_time_ms)
+        if (ms != wf->time_ms)
         {
-            wf->g_time_ms = ms;
+            wf->time_ms = ms;
             need_re_render = 1;
         }
     }
 
-    return need_re_render || wf->g_need_re_render;
+    return need_re_render || wf->need_re_render;
 }
 
 void render(HVIEW v, HCONTEXT c, float x, float y, float width, float height)
 {
     Watchface* wf = get_watchface(v);
-    wf->g_need_re_render = 0;
+    wf->need_re_render = 0;
 
     const char* aa = hiview_get_css_property(v, "-hi-max");
     float minL = fmin(width, height);
@@ -373,20 +373,20 @@ void render(HVIEW v, HCONTEXT c, float x, float y, float width, float height)
     float cr = minL / 2;
 
 
-    float h = wf->g_time_h;
-    float m = wf->g_time_m;
-    float s = wf->g_time_s;
-    float ms = wf->g_time_ms;
+    float h = wf->time_h;
+    float m = wf->time_m;
+    float s = wf->time_s;
+    float ms = wf->time_ms;
 
 
 
-    if (wf->g_has_hand_m)
+    if (wf->has_hand_m)
         paintMinuteHand(c, cx, cy, cr * 0.7f, M_PI * 2 * (m / 60 + (s / 60) * (1.0f / 60)));
 
-    if (wf->g_has_hand_h)
+    if (wf->has_hand_h)
         paintHourHand(c, cx, cy, cr * 0.7f, M_PI * 2 * (h / 12 + (m / 60) * (1.0f / 12)));
 
-    if (wf->g_has_hand_s)
+    if (wf->has_hand_s)
         paintSecondHand(c, cx, cy, cr * 0.7f, M_PI * 2 * (s / 60 + (ms / 1000) * (1.0f / 60)));
 }
 
@@ -432,7 +432,7 @@ void post_render(HVIEW view, HCONTEXT context)
     if (strlen(buf))
         hiview_canvas_send_hands_moved_event(view, buf);
 
-    sprintf(buf, "%02d:%02d:%02d", wf->g_time_h, wf->g_time_m, wf->g_time_s);
+    sprintf(buf, "%02d:%02d:%02d", wf->time_h, wf->time_m, wf->time_s);
     hiview_set_attribute(view, "data-time", buf);
 }
 
