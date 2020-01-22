@@ -40,10 +40,10 @@ extern "C" {
 void initialize(HVIEW v, HCONTEXT c);
 int create(HVIEW view, HCONTEXT context, int* activeModeIntervalMs);
 int pre_render(HVIEW view, HCONTEXT context);
-void render(HCONTEXT context, float x, float y, float width, float height);
+void render(HVIEW v, HCONTEXT context, float x, float y, float width, float height);
 void post_render(HVIEW view, HCONTEXT context);
-void destroy();
-void terminate();
+void destroy(HVIEW view, HCONTEXT context);
+void terminate(HVIEW view, HCONTEXT context);
 
 
 #ifdef __cplusplus
