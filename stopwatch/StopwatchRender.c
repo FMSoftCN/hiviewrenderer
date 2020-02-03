@@ -183,6 +183,11 @@ void terminate(HVIEW view, HCONTEXT context)
 {
 }
 
+void on_param_change(HVIEW v, HCONTEXT c, const char* name, const char* value)
+{
+    printf("########################## StopwatchRender  on_param_change name=%s|value=%s\n", name, value);
+}
+
 void paintStopWatchDial(HCONTEXT c, float cx, float cy, float length, float width, double scale)
 {
     float x = 0;

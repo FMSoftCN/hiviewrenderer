@@ -210,6 +210,11 @@ void terminate(HVIEW view, HCONTEXT context)
 {
 }
 
+void on_param_change(HVIEW v, HCONTEXT c, const char* name, const char* value)
+{
+    printf("########################## WatchfaceRender on_param_change name=%s|value=%s\n", name, value);
+}
+
 void paintHourHand(HCONTEXT c, float cx, float cy, float r, float angleInRadians)
 {
     float x = 0;
