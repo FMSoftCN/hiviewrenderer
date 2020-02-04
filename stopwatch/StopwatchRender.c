@@ -30,11 +30,21 @@
 #define FALSE          0
 #define M_PI           3.14159265358979323846
 
+enum stopwatch_action
+{
+    NEW,
+    START,
+    PAUSE,
+    STOP,
+    RESET
+};
+
 typedef struct watchface_data
 {
     int watchface_mode;
 
     double time_start;
+    double time_lapse;
 
     int time_h;
     int time_m;
@@ -43,14 +53,14 @@ typedef struct watchface_data
 
     int need_re_render;
 
-    int displayMinute;
-    int displayHour;
-    int displaySecond;
+    int has_hand_m;
+    int has_hand_h;
+    int has_hand_s;
 
     float minuteScale;
     float hourScale;
     float secondScale;
-} Watchface;
+} Stopwatch;
 
 char * strtrimall( char *src)
 {
@@ -87,74 +97,101 @@ char * strtrimall( char *src)
 }
 
 
-Watchface* init_watchface(HVIEW v, HCONTEXT c)
+Stopwatch* init_watchface(HVIEW v, HCONTEXT c)
 {
-    Watchface* wf = (Watchface*)malloc(sizeof(Watchface));
+    Stopwatch* sw = (Stopwatch*)malloc(sizeof(Stopwatch));
 
-    wf->watchface_mode = ACTIVE_MODE;
+    sw->watchface_mode = ACTIVE_MODE;
 
-    wf->time_start = hview_canvas_get_local_time_ms(c);
-    wf->time_h = 0;
-    wf->time_m = 0;
-    wf->time_s = 0;
-    wf->time_ms = 0;
-    wf->need_re_render = 1;
+    sw->time_start = hview_canvas_get_local_time_ms(c);
+    sw->time_h = 0;
+    sw->time_m = 0;
+    sw->time_s = 0;
+    sw->time_ms = 0;
+    sw->need_re_render = 1;
 
-    wf->displayMinute = 1;
-    wf->displayHour = 1;
-    wf->displaySecond = 1;
+    sw->has_hand_m = 1;
+    sw->has_hand_h = 1;
+    sw->has_hand_s = 1;
 
-    wf->minuteScale = 60;
-    wf->hourScale = 12;
-    wf->secondScale = 60;
+    sw->minuteScale = 60;
+    sw->hourScale = 12;
+    sw->secondScale = 60;
 
-    hview_set_extra(v, wf);
-    return wf;
+    hview_set_extra(v, sw);
+    return sw;
 }
 
-Watchface* get_watchface(HVIEW v)
+Stopwatch* get_stopwatch(HVIEW v)
 {
     return hview_get_extra(v);
 }
 
 int get_data_move_attribute(HVIEW v)
 {
-    const char* move = hiview_get_attribute(v, "data-move");
+    char* move = hiview_get_attribute(v, "data-move");
     if (!move)
     {
         return 1;
     }
 
-    if (strcasecmp(move, "static") == 0)
-    {
-        return 0;
-    }
-    else
-    {
-        return 1;
-    }
+    int ret = strcasecmp(move, "static") == 0  ? 0 : 1;
+    free(move);
+    return ret;
 }
 
 void init_time_by_data_time_attribute(HVIEW v)
 {
-    const char* data_time = hiview_get_attribute(v, "data-time");
+    char* data_time = hiview_get_attribute(v, "data-time");
     if (!data_time)
         return;
+
     int h = 0;
     int m = 0;
     int s = 0;
     int ret = sscanf(data_time, "%d:%d:%d", &h, &m, &s);
     if (ret != EOF)
     {
-        Watchface* wf = get_watchface(v);
-        wf->time_h = h;
-        wf->time_m = m;
-        wf->time_s = s;
+        Stopwatch* sw = get_stopwatch(v);
+        sw->time_h = h;
+        sw->time_m = m;
+        sw->time_s = s;
     }
+
+    free(data_time);
 }
 
 void update_hands_info_by_param(HVIEW v)
 {
+    char* param_hands = hiview_get_param(v, "faces");
+    if (!param_hands)
+        return;
+
+    Stopwatch* sw = get_stopwatch(v);
+    sw->has_hand_h = 0;
+    sw->has_hand_m = 0;
+    sw->has_hand_s = 0;
+
+    char* token = strtok(param_hands, ",");
+    while( token != NULL )
+    {
+        printf("token=%s\n", token);
+        if (strcasecmp(strtrimall(token), "hour") == 0)
+        {
+            sw->has_hand_h = 1;
+        }
+        else if (strcasecmp(strtrimall(token), "minute") == 0)
+        {
+            sw->has_hand_m = 1;
+        }
+        else if (strcasecmp(strtrimall(token), "second") == 0)
+        {
+            sw->has_hand_s = 1;
+        }
+
+        token = strtok(NULL, ",");
+    }
+    free(param_hands);
 }
 
 
@@ -169,14 +206,14 @@ int create(HVIEW view, HCONTEXT context, int* activeModeIntervalMs)
 {
     *activeModeIntervalMs = 10;
 
-    Watchface* wf = get_watchface(view);
-    return wf->watchface_mode;
+    Stopwatch* sw = get_stopwatch(view);
+    return sw->watchface_mode;
 }
 
 void destroy(HVIEW view, HCONTEXT context)
 {
-    Watchface* wf = get_watchface(view);
-    free(wf);
+    Stopwatch* sw = get_stopwatch(view);
+    free(sw);
 }
 
 void terminate(HVIEW view, HCONTEXT context)
@@ -241,26 +278,26 @@ void paintStopWatchHand(HCONTEXT c, float cx, float cy, float length, float widt
 int pre_render(HVIEW v, HCONTEXT c)
 {
     int need_re_render = 1;
-    Watchface* wf = get_watchface(v);
+    Stopwatch* sw = get_stopwatch(v);
 
     double ct = hview_canvas_get_local_time_ms(c);
-    double diff = ct - wf->time_start;
+    double diff = ct - sw->time_start;
 
     if (diff <= 0)
         return 0;
 
-    wf->time_h = floor(diff/ 3600000);
-    wf->time_m = fmod(floor(diff / 60000), 60);
-    wf->time_s = fmod(floor(diff / 1000 ), 60);
-    wf->time_ms = fmod(diff, 1000);
+    sw->time_h = floor(diff/ 3600000);
+    sw->time_m = fmod(floor(diff / 60000), 60);
+    sw->time_s = fmod(floor(diff / 1000 ), 60);
+    sw->time_ms = fmod(diff, 1000);
 
-    return need_re_render | wf->need_re_render;
+    return need_re_render | sw->need_re_render;
 }
 
 void render(HVIEW v, HCONTEXT c, float x, float y, float width, float height)
 {
-    Watchface* wf = get_watchface(v);
-    wf->need_re_render = 0;
+    Stopwatch* sw = get_stopwatch(v);
+    sw->need_re_render = 0;
 
     const char* aa = hiview_get_css_property(v, "-hi-max");
     float minL = fmin(width, height);
@@ -268,31 +305,31 @@ void render(HVIEW v, HCONTEXT c, float x, float y, float width, float height)
     float cy = minL / 2;
     float r = minL / 2;
 
-    float h = wf->time_h;
-    float m = wf->time_m;
-    float s = wf->time_s;
-    float ms = wf->time_ms;
+    float h = sw->time_h;
+    float m = sw->time_m;
+    float s = sw->time_s;
+    float ms = sw->time_ms;
 
-    if (wf->displayMinute)
+    if (sw->has_hand_m)
     {
         float mcx = cx;
         float mcy = cy - r * 0.7f * 0.9f * 0.50f;
-        paintStopWatchDial(c, mcx, mcy, r * 0.75f * 0.25, r * 0.006f, wf->minuteScale);
-        paintStopWatchHand(c, mcx, mcy, r * 0.75f * 0.25, r * 0.006f, M_PI * 2 * ((float)m / wf->minuteScale + ((float) s / 60) * (1.0f / wf->minuteScale)), 0xFFFFFF00);
+        paintStopWatchDial(c, mcx, mcy, r * 0.75f * 0.25, r * 0.006f, sw->minuteScale);
+        paintStopWatchHand(c, mcx, mcy, r * 0.75f * 0.25, r * 0.006f, M_PI * 2 * ((float)m / sw->minuteScale + ((float) s / 60) * (1.0f / sw->minuteScale)), 0xFFFFFF00);
     }
 
-    if (wf->displayHour)
+    if (sw->has_hand_h)
     {
         float hcx = cx;
         float hcy = cy + r * 0.7f * 0.9f * 0.50f;
-        paintStopWatchDial(c, hcx, hcy, r * 0.75f * 0.25, r * 0.006f, wf->hourScale);
-        paintStopWatchHand(c, hcx, hcy, r * 0.75f * 0.25, r * 0.006f, M_PI * 2 * ((float)h / wf->hourScale + ((float)m / 60) * (1.0f / wf->hourScale)), 0xFFFFFF00);
+        paintStopWatchDial(c, hcx, hcy, r * 0.75f * 0.25, r * 0.006f, sw->hourScale);
+        paintStopWatchHand(c, hcx, hcy, r * 0.75f * 0.25, r * 0.006f, M_PI * 2 * ((float)h / sw->hourScale + ((float)m / 60) * (1.0f / sw->hourScale)), 0xFFFFFF00);
     }
 
-    if (wf->displaySecond)
+    if (sw->has_hand_s)
     {
-        paintStopWatchDial(c, cx, cy, r * 0.75f, r * 0.01f, wf->secondScale);
-        paintStopWatchHand(c, cx, cy, r * 0.75f, r * 0.01f, M_PI * 2 * ((float)s / wf->secondScale + ((float)ms / 1000) * (1.0f / wf->secondScale)), 0xFFFFFF00);
+        paintStopWatchDial(c, cx, cy, r * 0.75f, r * 0.01f, sw->secondScale);
+        paintStopWatchHand(c, cx, cy, r * 0.75f, r * 0.01f, M_PI * 2 * ((float)s / sw->secondScale + ((float)ms / 1000) * (1.0f / sw->secondScale)), 0xFFFFFF00);
     }
 }
 
