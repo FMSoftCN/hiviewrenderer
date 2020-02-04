@@ -189,9 +189,9 @@ void hiview_canvas_re_render(HCONTEXT c);
 double hview_canvas_get_time_ms(HCONTEXT c);
 double hview_canvas_get_local_time_ms(HCONTEXT c);
 
-const char* hiview_get_attribute(HVIEW v, const char* name);
+char* hiview_get_attribute(HVIEW v, const char* name);
 void hiview_set_attribute(HVIEW v, const char* name, const char* value);
-const char* hiview_get_css_property(HVIEW v, const char* name);
+char* hiview_get_css_property(HVIEW v, const char* name);
 
 void hiview_canvas_send_event(HVIEW v, const char* event, int isCanBubble, int isCancelable);
 void hiview_canvas_send_hands_moved_event(HVIEW v, const char* info);

@@ -118,7 +118,7 @@ Watchface* get_watchface(HVIEW v)
 
 int get_data_move_attribute(HVIEW v)
 {
-    const char* move = hiview_get_attribute(v, "data-move");
+    char* move = hiview_get_attribute(v, "data-move");
     if (!move)
     {
         return 1;
@@ -131,7 +131,7 @@ int get_data_move_attribute(HVIEW v)
 
 void init_time_by_data_time_attribute(HVIEW v)
 {
-    const char* data_time = hiview_get_attribute(v, "data-time");
+    char* data_time = hiview_get_attribute(v, "data-time");
     if (!data_time)
         return;
     int h = 0;
