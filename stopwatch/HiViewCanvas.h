@@ -200,8 +200,8 @@ void hiview_canvas_send_hands_moved_event(HVIEW v, const char* info);
 char* hiview_get_param(HVIEW v, const char* name);
 
 
-void hview_set_extra(HVIEW v, void* extra);
-void* hview_get_extra(HVIEW v);
+void hiview_set_extra(HVIEW v, void* extra);
+void* hiview_get_extra(HVIEW v);
 
 #ifdef __cplusplus
 } // extern "C"

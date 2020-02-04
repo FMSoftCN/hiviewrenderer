@@ -107,13 +107,13 @@ Watchface* init_watchface(HVIEW v)
     wf->has_hand_m = 1;
     wf->has_hand_s = 1;
 
-    hview_set_extra(v, wf);
+    hiview_set_extra(v, wf);
     return wf;
 }
 
 Watchface* get_watchface(HVIEW v)
 {
-    return hview_get_extra(v);
+    return hiview_get_extra(v);
 }
 
 int get_data_move_attribute(HVIEW v)

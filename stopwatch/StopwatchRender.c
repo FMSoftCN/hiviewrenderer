@@ -122,13 +122,13 @@ Stopwatch* init_struct(HVIEW v, HCONTEXT c)
 
     sw->action = START;
 
-    hview_set_extra(v, sw);
+    hiview_set_extra(v, sw);
     return sw;
 }
 
 Stopwatch* get_stopwatch(HVIEW v)
 {
-    return hview_get_extra(v);
+    return hiview_get_extra(v);
 }
 
 int get_data_move_attribute(HVIEW v)
