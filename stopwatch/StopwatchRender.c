@@ -30,14 +30,14 @@
 #define FALSE          0
 #define M_PI           3.14159265358979323846
 
-enum stopwatch_action
+typedef enum stopwatch_action
 {
     NEW,
     START,
     PAUSE,
     STOP,
     RESET
-};
+} StopwatchAction;
 
 typedef struct watchface_data
 {
@@ -60,6 +60,8 @@ typedef struct watchface_data
     int minuteScale;
     int hourScale;
     int secondScale;
+
+    StopwatchAction action;
 } Stopwatch;
 
 char * strtrimall( char *src)
@@ -117,6 +119,8 @@ Stopwatch* init_struct(HVIEW v, HCONTEXT c)
     sw->minuteScale = 60;
     sw->hourScale = 12;
     sw->secondScale = 60;
+
+    sw->action = START;
 
     hview_set_extra(v, sw);
     return sw;
@@ -212,12 +216,66 @@ void update_hands_info_by_param(HVIEW v)
     free(param_hands);
 }
 
+StopwatchAction parse_action(Stopwatch* sw, const char* action)
+{
+    if (!action)
+        return sw->action;
+
+    if(strcasecmp(action, "reset") == 0)
+        return RESET; 
+    else if(strcasecmp(action, "start") == 0)
+        return START;
+    else if(strcasecmp(action, "pause") == 0)
+        return PAUSE;
+    else if(strcasecmp(action, "stop") == 0)
+        return STOP;
+    else if(strcasecmp(action, "new") == 0)
+        return NEW;
+    return START;
+}
+
+void update_action(HCONTEXT c, Stopwatch* sw, StopwatchAction newAction)
+{
+    if (!sw || sw->action == newAction)
+        return;
+
+    switch(newAction)
+    {
+        case RESET:
+        case NEW:
+            sw->time_lapse = 0;
+        case START:
+            sw->time_start = hview_canvas_get_local_time_ms(c);
+            if (sw->action == STOP)
+            {
+                sw->time_lapse = 0;
+            }
+            break;
+
+        case PAUSE:
+        case STOP:
+            break;
+    }
+    sw->action = newAction;
+}
+
+void init_action(HVIEW v, HCONTEXT c)
+{
+    char* param = hiview_get_param(v, "action");
+    if (!param)
+        return;
+
+    Stopwatch* sw = get_stopwatch(v);
+    update_action(c, sw, parse_action(sw, param));
+    free(param);
+}
 
 void initialize(HVIEW v, HCONTEXT c)
-{
-    init_struct(v, c);
-    init_scale(v);
+{   
+    init_struct(v, c); 
+    init_scale(v); 
     update_hands_info_by_param(v);
+    init_action(v, c);
 }
 
 int create(HVIEW view, HCONTEXT context, int* activeModeIntervalMs)
@@ -240,7 +298,11 @@ void terminate(HVIEW view, HCONTEXT context)
 
 void on_param_change(HVIEW v, HCONTEXT c, const char* name, const char* value)
 {
-    printf("########################## StopwatchRender  on_param_change name=%s|value=%s\n", name, value);
+    if (value != NULL && strcasecmp(name, "action") == 0)
+    {
+        Stopwatch* sw = get_stopwatch(v);
+        update_action(c, sw, parse_action(sw, value));
+    }
 }
 
 void paintStopWatchDial(HCONTEXT c, float cx, float cy, float length, float width, int circle)
@@ -297,17 +359,28 @@ int pre_render(HVIEW v, HCONTEXT c)
     int need_re_render = 1;
     Stopwatch* sw = get_stopwatch(v);
 
-    double ct = hview_canvas_get_local_time_ms(c);
-    double diff = ct - sw->time_start;
 
-    if (diff <= 0)
-        return 0;
+    switch(sw->action)
+    {
+        case NEW:
+        case START:
+        case RESET:
+            need_re_render = 1;
+            double ct = hview_canvas_get_local_time_ms(c);
+            double diff = ct - sw->time_start;
+            sw->time_lapse += diff;
+            sw->time_start = ct;
+            break;
 
-    sw->time_h = floor(diff/ 3600000);
-    sw->time_m = fmod(floor(diff / 60000), 60);
-    sw->time_s = fmod(floor(diff / 1000 ), 60);
-    sw->time_ms = fmod(diff, 1000);
+        case PAUSE:
+            need_re_render = 0;
+            break;
+    }
 
+    sw->time_h = floor(sw->time_lapse/ 3600000);
+    sw->time_m = fmod(floor(sw->time_lapse / 60000), 60);
+    sw->time_s = fmod(floor(sw->time_lapse / 1000 ), 60);
+    sw->time_ms = fmod(sw->time_lapse, 1000);
     return need_re_render | sw->need_re_render;
 }
 
