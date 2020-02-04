@@ -241,7 +241,6 @@ void update_action(HCONTEXT c, Stopwatch* sw, StopwatchAction newAction)
 
     switch(newAction)
     {
-        case RESET:
         case NEW:
             sw->time_lapse = 0;
         case START:
@@ -252,6 +251,7 @@ void update_action(HCONTEXT c, Stopwatch* sw, StopwatchAction newAction)
             }
             break;
 
+        case RESET:
         case PAUSE:
         case STOP:
             break;
@@ -359,28 +359,36 @@ int pre_render(HVIEW v, HCONTEXT c)
     int need_re_render = 1;
     Stopwatch* sw = get_stopwatch(v);
 
+    int change = 0;
 
     switch(sw->action)
     {
         case NEW:
         case START:
-        case RESET:
-            need_re_render = 1;
+            change = 1;
             double ct = hview_canvas_get_local_time_ms(c);
             double diff = ct - sw->time_start;
             sw->time_lapse += diff;
             sw->time_start = ct;
             break;
 
+        case RESET:
+            change = 1;
+            sw->time_lapse = 0;
+            break;
+
         case PAUSE:
-            need_re_render = 0;
             break;
     }
 
-    sw->time_h = floor(sw->time_lapse/ 3600000);
-    sw->time_m = fmod(floor(sw->time_lapse / 60000), 60);
-    sw->time_s = fmod(floor(sw->time_lapse / 1000 ), 60);
-    sw->time_ms = fmod(sw->time_lapse, 1000);
+    if (change)
+    {
+        sw->time_h = floor(sw->time_lapse/ 3600000);
+        sw->time_m = fmod(floor(sw->time_lapse / 60000), 60);
+        sw->time_s = fmod(floor(sw->time_lapse / 1000 ), 60);
+        sw->time_ms = fmod(sw->time_lapse, 1000);
+        need_re_render = 1;
+    }
     return need_re_render | sw->need_re_render;
 }
 
