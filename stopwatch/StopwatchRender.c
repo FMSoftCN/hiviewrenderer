@@ -57,9 +57,9 @@ typedef struct watchface_data
     int has_hand_h;
     int has_hand_s;
 
-    float minuteScale;
-    float hourScale;
-    float secondScale;
+    int minuteScale;
+    int hourScale;
+    int secondScale;
 } Stopwatch;
 
 char * strtrimall( char *src)
@@ -140,25 +140,43 @@ int get_data_move_attribute(HVIEW v)
     return ret;
 }
 
-void init_time_by_data_time_attribute(HVIEW v)
+void init_scale(HVIEW v)
 {
-    char* data_time = hiview_get_attribute(v, "data-time");
-    if (!data_time)
-        return;
+    int value = 0;
+    Stopwatch* sw = get_stopwatch(v);
 
-    int h = 0;
-    int m = 0;
-    int s = 0;
-    int ret = sscanf(data_time, "%d:%d:%d", &h, &m, &s);
-    if (ret != EOF)
+    char* buf = hiview_get_param(v, "secondscale");
+    if (buf)
     {
-        Stopwatch* sw = get_stopwatch(v);
-        sw->time_h = h;
-        sw->time_m = m;
-        sw->time_s = s;
+        int ret = sscanf(buf, "%d", &value);
+        if (ret != EOF)
+        {
+            sw->secondScale = value;
+        }
+        free(buf);
     }
 
-    free(data_time);
+    buf = hiview_get_param(v, "minutescale");
+    if (buf)
+    {
+        int ret = sscanf(buf, "%d", &value);
+        if (ret != EOF)
+        {
+            sw->minuteScale = value;
+        }
+        free(buf);
+    }
+
+    buf = hiview_get_param(v, "hourscale");
+    if (buf)
+    {
+        int ret = sscanf(buf, "%d", &value);
+        if (ret != EOF)
+        {
+            sw->hourScale = value;
+        }
+        free(buf);
+    }
 }
 
 void update_hands_info_by_param(HVIEW v)
@@ -198,7 +216,7 @@ void update_hands_info_by_param(HVIEW v)
 void initialize(HVIEW v, HCONTEXT c)
 {
     init_struct(v, c);
-    init_time_by_data_time_attribute(v);
+    init_scale(v);
     update_hands_info_by_param(v);
 }
 
@@ -225,12 +243,11 @@ void on_param_change(HVIEW v, HCONTEXT c, const char* name, const char* value)
     printf("########################## StopwatchRender  on_param_change name=%s|value=%s\n", name, value);
 }
 
-void paintStopWatchDial(HCONTEXT c, float cx, float cy, float length, float width, double scale)
+void paintStopWatchDial(HCONTEXT c, float cx, float cy, float length, float width, int circle)
 {
     float x = 0;
     float y = 0;
 
-    int circle = (float)scale;
     for (int i = 0; i < circle; i++)
     {
         float angleInRadians = M_PI * 2 * ((float)i / circle);
