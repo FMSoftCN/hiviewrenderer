@@ -97,7 +97,7 @@ char * strtrimall( char *src)
 }
 
 
-Stopwatch* init_watchface(HVIEW v, HCONTEXT c)
+Stopwatch* init_struct(HVIEW v, HCONTEXT c)
 {
     Stopwatch* sw = (Stopwatch*)malloc(sizeof(Stopwatch));
 
@@ -197,7 +197,7 @@ void update_hands_info_by_param(HVIEW v)
 
 void initialize(HVIEW v, HCONTEXT c)
 {
-    init_watchface(v, c);
+    init_struct(v, c);
     init_time_by_data_time_attribute(v);
     update_hands_info_by_param(v);
 }
