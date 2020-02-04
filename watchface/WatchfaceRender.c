@@ -124,14 +124,9 @@ int get_data_move_attribute(HVIEW v)
         return 1;
     }
 
-    if (strcasecmp(move, "static") == 0)
-    {
-        return 0;
-    }
-    else
-    {
-        return 1;
-    }
+    int ret = strcasecmp(move, "static") == 0  ? 0 : 1;
+    free(move);
+    return ret;
 }
 
 void init_time_by_data_time_attribute(HVIEW v)
@@ -150,6 +145,7 @@ void init_time_by_data_time_attribute(HVIEW v)
         wf->time_m = m;
         wf->time_s = s;
     }
+    free(data_time);
 }
 
 void update_hands_info_by_param(HVIEW v)
