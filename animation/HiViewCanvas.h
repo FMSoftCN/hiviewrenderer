@@ -201,7 +201,11 @@ void hiview_canvas_send_hands_moved_event(HVIEW v, const char* info);
 
 /* Memory for the new string is obtained with malloc, and can be freed with free */
 char* hiview_get_param(HVIEW v, const char* name);
+/* Memory for the new string is obtained with malloc, and can be freed with free */
+char* hview_get_param_value(HPARAM p);
 HPARAM hiview_get_param_object(HVIEW v, const char* name);
+/* Memory for the HPARAM* is obtained with malloc, and can be freed with free */
+HPARAM* hiview_get_all_param_object(HVIEW v, int* count);
 void hiview_param_create_audio(HPARAM param);
 void hiview_param_start_audio(HPARAM param);
 void hiview_param_stop_audio(HPARAM param);

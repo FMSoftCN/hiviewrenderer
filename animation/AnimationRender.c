@@ -34,6 +34,15 @@ typedef struct animation_data
     int animation_mode;
     int need_re_render;
 
+    HPARAM* params;
+    int paramSize;
+
+    int currentIndex;
+    int currentPosX;
+    int currentPosY;
+    float currentScale;
+    float currentDelay;
+
 } Animation;
 
 char * strtrimall( char *src)
@@ -79,6 +88,15 @@ Animation* init_animation(HVIEW v)
 
     an->need_re_render = 1;
 
+    an->params = NULL;
+    an->paramSize = 0;
+
+    an->currentIndex = -1;
+    an->currentPosX = 0;
+    an->currentPosY = 0;
+    an->currentScale = 1.0;
+    an->currentDelay = 0.0;
+
     hiview_set_extra(v, an);
     return an;
 }
@@ -88,9 +106,79 @@ Animation* get_animation(HVIEW v)
     return hiview_get_extra(v);
 }
 
+void init_params(HVIEW v)
+{
+    int count = 0;
+    Animation* an = get_animation(v);
+    an->params = hiview_get_all_param_object(v, &count);
+    an->paramSize = count;
+}
+
+void update_current_param(HVIEW v, int index)
+{
+    Animation* an = get_animation(v);
+    if (index == an->currentIndex || index > an->paramSize)
+        return;
+
+    HPARAM p = an->params[index];
+    an->currentIndex = index;
+    char* value = hview_get_param_value(p);
+    if (!value)
+        return;
+
+    printf("................................................index =%d|value=%s\n", index, value);
+    int i = 0;
+    char* token = strtok(value, " ");
+    while( token != NULL )
+    {
+        printf("token=%s\n", token);
+        int v = 0;
+        if (i < 2)
+        {
+            int ret = sscanf(token, "%d", &v);
+            if (ret != EOF)
+            {
+                if (i == 0)
+                    an->currentPosX = v;
+                else if (i == 1)
+                    an->currentPosY = v;
+            }
+        }
+        else
+        {
+            float fv = 0.0;
+            int ret = EOF;
+            if (strstr(token, "x"))
+            {
+                ret = sscanf(token, "%f", &fv);
+                if (ret != EOF)
+                {
+                    an->currentScale = fv;
+                }
+            }
+            else if (strstr(token, "s"))
+            {
+                ret = sscanf(token, "%f", &fv);
+                if (ret != EOF)
+                {
+                    an->currentDelay = fv;
+                }
+            }
+        }
+
+        i++;
+        token = strtok(NULL, " ");
+    }
+    printf(".................................................x=%d|y=%d|scale=%f|delay=%f\n", an->currentPosX, an->currentPosY, an->currentScale, an->currentDelay);
+
+    free(value);
+}
+
+
 void initialize(HVIEW v, HCONTEXT c)
 {
     init_animation(v);
+    init_params(v);
 }
 
 int create(HVIEW view, HCONTEXT context, int* activeModeIntervalMs)
@@ -104,6 +192,8 @@ int create(HVIEW view, HCONTEXT context, int* activeModeIntervalMs)
 void destroy(HVIEW view, HCONTEXT context)
 {
     Animation* an = get_animation(view);
+    if (an->params)
+        free(an->params);
     free(an);
 }
 
@@ -118,7 +208,21 @@ void on_param_change(HVIEW v, HCONTEXT c, const char* name, const char* value)
 int pre_render(HVIEW v, HCONTEXT c)
 {
     int need_re_render = 0;
+
     Animation* an = get_animation(v);
+    int index = (an->currentIndex + 1 >= an->paramSize) ? 0 : (an->currentIndex  + 1);
+    need_re_render = index != an->currentIndex ? 1 : 0;
+    if (index < an->paramSize -1)
+    {
+        need_re_render = 1;
+    }
+    else
+        need_re_render = 0;
+
+    an->need_re_render = 0;
+    if (need_re_render)
+    update_current_param(v, index);
+
     return need_re_render || an->need_re_render;
 }
 
