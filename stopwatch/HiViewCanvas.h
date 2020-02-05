@@ -72,6 +72,7 @@ typedef uintptr_t HCANVASPATTERN;
 typedef uintptr_t HHTMLIMAGEELEMENT;
 typedef uintptr_t HIMAGEDATA;
 typedef uintptr_t HTIMER;
+typedef uintptr_t HPARAM;
 
 
 #ifdef __cplusplus
@@ -189,8 +190,10 @@ void hiview_canvas_re_render(HCONTEXT c);
 double hview_canvas_get_time_ms(HCONTEXT c);
 double hview_canvas_get_local_time_ms(HCONTEXT c);
 
+/* Memory for the new string is obtained with malloc, and can be freed with free */
 char* hiview_get_attribute(HVIEW v, const char* name);
 void hiview_set_attribute(HVIEW v, const char* name, const char* value);
+/* Memory for the new string is obtained with malloc, and can be freed with free */
 char* hiview_get_css_property(HVIEW v, const char* name);
 
 void hiview_canvas_send_event(HVIEW v, const char* event, int isCanBubble, int isCancelable);
@@ -198,6 +201,11 @@ void hiview_canvas_send_hands_moved_event(HVIEW v, const char* info);
 
 /* Memory for the new string is obtained with malloc, and can be freed with free */
 char* hiview_get_param(HVIEW v, const char* name);
+HPARAM hiview_get_param_object(HVIEW v, const char* name);
+void hiview_param_create_audio(HPARAM param);
+void hiview_param_start_audio(HPARAM param);
+void hiview_param_stop_audio(HPARAM param);
+
 
 
 void hiview_set_extra(HVIEW v, void* extra);

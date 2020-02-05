@@ -62,6 +62,7 @@ typedef struct watchface_data
     int secondScale;
 
     StopwatchAction action;
+    HPARAM audioParam;
 } Stopwatch;
 
 char * strtrimall( char *src)
@@ -120,7 +121,8 @@ Stopwatch* init_struct(HVIEW v, HCONTEXT c)
     sw->hourScale = 12;
     sw->secondScale = 60;
 
-    sw->action = START;
+    sw->action = STOP;
+    sw->audioParam = INVALID_HANDLE;
 
     hiview_set_extra(v, sw);
     return sw;
@@ -197,7 +199,6 @@ void update_hands_info_by_param(HVIEW v)
     char* token = strtok(param_hands, ",");
     while( token != NULL )
     {
-        printf("token=%s\n", token);
         if (strcasecmp(strtrimall(token), "hour") == 0)
         {
             sw->has_hand_h = 1;
@@ -215,6 +216,36 @@ void update_hands_info_by_param(HVIEW v)
     }
     free(param_hands);
 }
+
+void init_audioParam(HVIEW v, HCONTEXT c)
+{
+    HPARAM param = hiview_get_param_object(v, "ticktack");
+    if (!param)
+        return;
+
+    Stopwatch* sw = get_stopwatch(v);
+    sw->audioParam = param;
+    hiview_param_create_audio(param);
+}
+
+void start_audio(HVIEW v)
+{
+    Stopwatch* sw = get_stopwatch(v);
+    if (sw->audioParam)
+    {
+        hiview_param_start_audio(sw->audioParam);
+    }
+}
+
+void stop_audio(HVIEW v)
+{
+    Stopwatch* sw = get_stopwatch(v);
+    if (sw->audioParam)
+    {
+        hiview_param_stop_audio(sw->audioParam);
+    }
+}
+
 
 StopwatchAction parse_action(Stopwatch* sw, const char* action)
 {
@@ -234,7 +265,7 @@ StopwatchAction parse_action(Stopwatch* sw, const char* action)
     return START;
 }
 
-void update_action(HCONTEXT c, Stopwatch* sw, StopwatchAction newAction)
+void update_action(HVIEW v, HCONTEXT c, Stopwatch* sw, StopwatchAction newAction)
 {
     if (!sw || sw->action == newAction)
         return;
@@ -249,11 +280,13 @@ void update_action(HCONTEXT c, Stopwatch* sw, StopwatchAction newAction)
             {
                 sw->time_lapse = 0;
             }
+            start_audio(v);
             break;
 
         case RESET:
         case PAUSE:
         case STOP:
+            stop_audio(v);
             break;
     }
     sw->action = newAction;
@@ -266,7 +299,7 @@ void init_action(HVIEW v, HCONTEXT c)
         return;
 
     Stopwatch* sw = get_stopwatch(v);
-    update_action(c, sw, parse_action(sw, param));
+    update_action(v, c, sw, parse_action(sw, param));
     free(param);
 }
 
@@ -274,6 +307,7 @@ void initialize(HVIEW v, HCONTEXT c)
 {   
     init_struct(v, c); 
     init_scale(v); 
+    init_audioParam(v, c);
     update_hands_info_by_param(v);
     init_action(v, c);
 }
@@ -301,7 +335,7 @@ void on_param_change(HVIEW v, HCONTEXT c, const char* name, const char* value)
     if (value != NULL && strcasecmp(name, "action") == 0)
     {
         Stopwatch* sw = get_stopwatch(v);
-        update_action(c, sw, parse_action(sw, value));
+        update_action(v, c, sw, parse_action(sw, value));
     }
 }
 
