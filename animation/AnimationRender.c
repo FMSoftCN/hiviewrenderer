@@ -46,6 +46,8 @@ typedef struct animation_data
     float currentScale;
     float currentDelay;
 
+    double timeAnimationEnd;
+
 } Animation;
 
 char * strtrimall( char *src)
@@ -102,6 +104,7 @@ Animation* init_animation(HVIEW v)
     an->currentPosY = 0;
     an->currentScale = 1.0;
     an->currentDelay = 0.0;
+    an->timeAnimationEnd = 0.0;
 
     hiview_set_extra(v, an);
     return an;
@@ -149,7 +152,7 @@ void init_attribute(HVIEW v)
 
 }
 
-void update_current_param(HVIEW v, int index)
+void update_current_param(HVIEW v, HCONTEXT c, int index)
 {
     Animation* an = get_animation(v);
     if (index == an->currentIndex || index > an->paramSize)
@@ -199,14 +202,15 @@ void update_current_param(HVIEW v, int index)
             }
         }
 
-        if (an->currentDelay <= 0)
-        {
-            an->currentDelay = an->data_interval;
-        }
-
         i++;
         token = strtok(NULL, " ");
     }
+
+    if (an->currentDelay <= 0)
+    {
+        an->currentDelay = an->data_interval;
+    }
+    an->timeAnimationEnd = hview_canvas_get_local_time_ms(c) + an->currentDelay * 1000;
 
     free(value);
 }
@@ -248,25 +252,23 @@ int pre_render(HVIEW v, HCONTEXT c)
     int need_re_render = 0;
 
     Animation* an = get_animation(v);
-    int index = (an->currentIndex + 1 >= an->paramSize) ? 0 : (an->currentIndex  + 1);
-    need_re_render = index != an->currentIndex ? 1 : 0;
-    if (index < an->paramSize -1)
-    {
-        need_re_render = 1;
-    }
-    else
-        need_re_render = 0;
 
-    an->need_re_render = 0;
-    if (need_re_render)
-    update_current_param(v, index);
+    double now = hview_canvas_get_local_time_ms(c); 
+    if (hview_canvas_get_local_time_ms(c) > an->timeAnimationEnd)
+    {
+        int index = (an->currentIndex + 1 >= an->paramSize) ? 0 : (an->currentIndex  + 1);
+        need_re_render = index != an->currentIndex ? 1 : 0;
+        update_current_param(v, c, index);
+    }
 
     return need_re_render || an->need_re_render;
 }
 
 void render(HVIEW v, HCONTEXT c, float x, float y, float width, float height)
 {
-    printf("..................................................................animation render\n");
+    Animation* an = get_animation(v);
+    an->need_re_render = 0;
+    printf("..................................................................animation render index=%d\n", an->currentIndex);
 }
 
 void post_render(HVIEW view, HCONTEXT context)
