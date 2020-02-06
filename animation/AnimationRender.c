@@ -34,6 +34,9 @@ typedef struct animation_data
     int animation_mode;
     int need_re_render;
 
+    float data_interval;
+    int data_loop;
+
     HPARAM* params;
     int paramSize;
 
@@ -88,6 +91,9 @@ Animation* init_animation(HVIEW v)
 
     an->need_re_render = 1;
 
+    an->data_loop = 1;
+    an->data_interval = 0.0;
+
     an->params = NULL;
     an->paramSize = 0;
 
@@ -114,6 +120,35 @@ void init_params(HVIEW v)
     an->paramSize = count;
 }
 
+void init_attribute(HVIEW v)
+{
+    Animation* an = get_animation(v);
+    char* buf = hiview_get_attribute(v, "data-interval");
+    if (buf)
+    {
+        float value = 0;
+        int ret = sscanf(buf, "%f", &value);
+        if (ret != EOF)
+        {
+            an->data_interval = value;
+        }
+        free(buf);
+    }
+
+    buf = hiview_get_attribute(v, "data-loop");
+    if (buf)
+    {
+        int value = 0;
+        int ret = sscanf(buf, "%d", &value);
+        if (ret != EOF)
+        {
+            an->data_loop = value;
+        }
+        free(buf);
+    }
+
+}
+
 void update_current_param(HVIEW v, int index)
 {
     Animation* an = get_animation(v);
@@ -126,12 +161,10 @@ void update_current_param(HVIEW v, int index)
     if (!value)
         return;
 
-    printf("................................................index =%d|value=%s\n", index, value);
     int i = 0;
     char* token = strtok(value, " ");
     while( token != NULL )
     {
-        printf("token=%s\n", token);
         int v = 0;
         if (i < 2)
         {
@@ -166,10 +199,14 @@ void update_current_param(HVIEW v, int index)
             }
         }
 
+        if (an->currentDelay <= 0)
+        {
+            an->currentDelay = an->data_interval;
+        }
+
         i++;
         token = strtok(NULL, " ");
     }
-    printf(".................................................x=%d|y=%d|scale=%f|delay=%f\n", an->currentPosX, an->currentPosY, an->currentScale, an->currentDelay);
 
     free(value);
 }
@@ -178,6 +215,7 @@ void update_current_param(HVIEW v, int index)
 void initialize(HVIEW v, HCONTEXT c)
 {
     init_animation(v);
+    init_attribute(v);
     init_params(v);
 }
 
