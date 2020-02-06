@@ -210,6 +210,8 @@ void hiview_param_create_audio(HPARAM param);
 void hiview_param_start_audio(HPARAM param);
 void hiview_param_stop_audio(HPARAM param);
 
+void hiview_canvas_draw_param_image(HVIEW v, HCONTEXT c, HPARAM param, float x, float y);
+
 
 
 void hiview_set_extra(HVIEW v, void* extra);

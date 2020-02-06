@@ -268,7 +268,8 @@ void render(HVIEW v, HCONTEXT c, float x, float y, float width, float height)
 {
     Animation* an = get_animation(v);
     an->need_re_render = 0;
-    printf("..................................................................animation render index=%d\n", an->currentIndex);
+    if (an->params[an->currentIndex])
+        hiview_canvas_draw_param_image(v, c, an->params[an->currentIndex], an->currentPosX, an->currentPosY);
 }
 
 void post_render(HVIEW view, HCONTEXT context)
