@@ -339,6 +339,10 @@ void on_param_change(HVIEW v, HCONTEXT c, const char* name, const char* value)
     }
 }
 
+void on_attribute_change(HVIEW v, HCONTEXT c, const char* name, const char* value)
+{
+}
+
 void paintStopWatchDial(HCONTEXT c, float cx, float cy, float length, float width, int circle)
 {
     float x = 0;

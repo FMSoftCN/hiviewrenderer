@@ -45,6 +45,7 @@ void post_render(HVIEW view, HCONTEXT context);
 void destroy(HVIEW view, HCONTEXT context);
 void terminate(HVIEW view, HCONTEXT context);
 void on_param_change(HVIEW v, HCONTEXT c, const char* name, const char* value);
+void on_attribute_change(HVIEW v, HCONTEXT c, const char* name, const char* value);
 
 
 #ifdef __cplusplus
