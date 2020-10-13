@@ -28,6 +28,7 @@ It is a simple stopwatch, implemented with extended hiview tag.
 
 $ cd animation
 $ make
-$ sudo make install  # install directory is : /opt/view-renderers/views.fmsoft.cn/
+# install directory is : /opt/view-renderers/views.fmsoft.cn/
+$ sudo make install
 
 ```
